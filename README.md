@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/optimml-logo.png" alt="OptimML Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/optimml-logo.svg" alt="OptimML Logo" width="200"/>
 </p>
 
 > A comprehensive machine learning framework for automated model selection and hyperparameter optimization using both genetic algorithms and exhaustive search methods. This interactive dashboard allows users to analyze datasets, train multiple ML models, and visualize results through an intuitive Streamlit interface.
@@ -116,11 +116,12 @@ OptimML-Framework/
 ## 📊 Dashboard Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/dashboard-main.png" alt="Dashboard Main View" width="700"/>
+  <!-- These placeholder comments will be replaced with actual screenshots once available -->
+  <!-- <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/dashboard-main.png" alt="Dashboard Main View" width="700"/> -->
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/model-comparison.png" alt="Model Comparison" width="700"/>
+  <!-- <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/model-comparison.png" alt="Model Comparison" width="700"/> -->
 </p>
 
 ## 🔧 Customization
