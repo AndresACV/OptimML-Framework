@@ -18,28 +18,88 @@ warnings.filterwarnings("ignore", category=UserWarning)
 import os 
 import matplotlib.pyplot as plt
 import seaborn as sns
-import CGenerator as cG
-import CEvaluator as cE
-import CPredictor as cP
-import CVisualizer as cV
+from . import CGenerator as cG
+from . import CEvaluator as cE
+from . import CPredictor as cP
 import streamlit as st
 from streamlit_option_menu import option_menu
 from datetime import datetime
 import json
+from .utils.print_utils import (
+    print_section_header, print_subsection_header, print_info, 
+    print_success, print_warning, print_error, print_progress
+)
+
+"""
+Data Visualization and Dashboard Module
+
+This module provides functionality for visualizing model evaluation results and creating
+interactive dashboards. It includes utilities for loading and processing data, training models,
+and creating various visualizations to compare model performance across different algorithms
+and optimization approaches.
+"""
 
 @st.cache_data
 def load_and_process_data(csv_files, use_sql, db_params):
+    """
+    Load and process data from CSV files or SQL database.
+    
+    This function uses the DataGenerator to load data from either CSV files or a SQL database,
+    process it, and prepare train/test splits for model training.
+    
+    Args:
+        csv_files (list): List of paths to CSV files
+        use_sql (bool): Whether to use SQL database for data storage
+        db_params (dict): Database connection parameters if use_sql is True
+        
+    Returns:
+        tuple: (X_trains, X_tests, y_trains, y_tests, dfs) containing:
+            - X_trains (dict): Dictionary of training feature sets by dataset name
+            - X_tests (dict): Dictionary of testing feature sets by dataset name
+            - y_trains (dict): Dictionary of training target values by dataset name
+            - y_tests (dict): Dictionary of testing target values by dataset name
+            - dfs (dict): Dictionary of original dataframes by dataset name
+    """
+    print_subsection_header("Data Loading and Processing")
+    
     data_gen = cG.DataGenerator(csv_files, use_sql=use_sql, db_params=db_params)
     data_gen.process()
     X_trains, X_tests, y_trains, y_tests = data_gen.get_data()
+    
+    print_success("Data loading and processing complete")
+    
     return X_trains, X_tests, y_trains, y_tests, data_gen.dfs
 
 @st.cache_data
 def train_models(X_trains, X_tests, y_trains, y_tests):
+    """
+    Train models using both genetic and exhaustive search methods.
+    
+    This function trains models for each dataset using both genetic algorithm and
+    exhaustive search approaches for hyperparameter optimization, and evaluates
+    their performance.
+    
+    Args:
+        X_trains (dict): Dictionary of training feature sets by dataset name
+        X_tests (dict): Dictionary of testing feature sets by dataset name
+        y_trains (dict): Dictionary of training target values by dataset name
+        y_tests (dict): Dictionary of testing target values by dataset name
+        
+    Returns:
+        tuple: (results_genetic, results_exhaustive, genetic_evaluation, exhaustive_evaluation) containing:
+            - results_genetic (dict): Results from genetic algorithm optimization
+            - results_exhaustive (dict): Results from exhaustive search optimization
+            - genetic_evaluation (dict): Evaluation metrics for genetic algorithm models
+            - exhaustive_evaluation (dict): Evaluation metrics for exhaustive search models
+    """
+    print_section_header("Model Training")
+    
     results_genetic = {}
     results_exhaustive = {}
 
     for dataset_name in X_trains.keys():
+        print_subsection_header(f"Training models for dataset: {dataset_name}")
+        
         evaluator = cE.ModelEvaluator(X_trains[dataset_name], X_tests[dataset_name], 
                                    y_trains[dataset_name], y_tests[dataset_name])
         results_genetic[dataset_name] = evaluator.genetic_search()
@@ -54,18 +114,52 @@ def train_models(X_trains, X_tests, y_trains, y_tests):
         genetic_evaluation[dataset_name] = predictor.evaluate_results(results_genetic[dataset_name])
         exhaustive_evaluation[dataset_name] = predictor.evaluate_results(results_exhaustive[dataset_name])
 
+    print_success("Model training complete")
+    
     return results_genetic, results_exhaustive, genetic_evaluation, exhaustive_evaluation
 
 
 class Visualizer:
-    """Componente visualizador: Se encarga de crear el dashboard."""
+    """
+    Visualizer class responsible for creating interactive dashboards and visualizations.
+    
+    This class provides methods to create various visualizations and dashboards to compare
+    model performance across different algorithms and optimization approaches. It handles
+    the presentation of results in a user-friendly format using Streamlit.
+    
+    Attributes:
+        results_genetic (dict): Results from genetic algorithm optimization
+        results_exhaustive (dict): Results from exhaustive search optimization
+        dfs (dict): Dictionary of original dataframes by dataset name
+    """
+    
     def __init__(self, results_genetic, results_exhaustive, dfs):
+        """
+        Initialize the Visualizer with model results and data.
+        
+        Args:
+            results_genetic (dict): Results from genetic algorithm optimization
+            results_exhaustive (dict): Results from exhaustive search optimization
+            dfs (dict): Dictionary of original dataframes by dataset name
+        """
         self.results_genetic = results_genetic
         self.results_exhaustive = results_exhaustive
         self.dfs = dfs
         
     def ensure_arrow_compatible(self, df):
-        """Ensure dataframe is compatible with Arrow for Streamlit."""
+        """
+        Ensure dataframe is compatible with Arrow for Streamlit.
+        
+        This method converts DataFrame columns to types that are compatible with
+        Apache Arrow, which is used by Streamlit for data transfer. This helps
+        prevent errors when displaying DataFrames in the Streamlit interface.
+        
+        Args:
+            df (DataFrame): Input DataFrame to convert
+            
+        Returns:
+            DataFrame: New DataFrame with Arrow-compatible data types
+        """
         # Create a new DataFrame with explicit types that Arrow can handle
         new_df = pd.DataFrame()
         
@@ -91,14 +185,24 @@ class Visualizer:
         return new_df
 
     def create_results_dataframe(self):
+        """
+        Create a summary DataFrame with model performance results.
+        
+        This method compiles the results from both genetic and exhaustive search
+        approaches into a single DataFrame for easy comparison, including RMSE
+        and training time for each algorithm and dataset.
+        
+        Returns:
+            DataFrame: Summary DataFrame with model performance metrics
+        """
         data = []
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
-                # Obtener los tiempos de entrenamiento
+                # Get training times
                 genetic_time = self.results_genetic[dataset_name][alg].get('training_time', 0)
                 exhaustive_time = self.results_exhaustive[dataset_name][alg].get('training_time', 0)
                 
-                # Formatear los tiempos en segundos con 2 decimales
+                # Format times in seconds with 2 decimals
                 genetic_time_formatted = f"{genetic_time:.2f} s"
                 exhaustive_time_formatted = f"{exhaustive_time:.2f} s"
                 
@@ -117,20 +221,29 @@ class Visualizer:
         return df
     
     def create_detailed_results_dataframe(self):
-        """Crea un DataFrame detallado con todos los resultados para exportar a Excel."""
+        """
+        Create a detailed DataFrame with all results for export to Excel.
+        
+        This method creates a comprehensive DataFrame with detailed information
+        about each model's performance, including hyperparameters, RMSE, and
+        training time for both genetic and exhaustive search approaches.
+        
+        Returns:
+            DataFrame: Detailed DataFrame with model performance and hyperparameters
+        """
         data = []
         
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
-                # Convertir los parámetros a formato de texto para Excel
+                # Convert parameters to text format for Excel
                 genetic_params = json.dumps(self.results_genetic[dataset_name][alg]['best_params'])
                 exhaustive_params = json.dumps(self.results_exhaustive[dataset_name][alg]['best_params'])
                 
-                # Obtener los tiempos de entrenamiento
+                # Get training times
                 genetic_time = self.results_genetic[dataset_name][alg].get('training_time', 0)
                 exhaustive_time = self.results_exhaustive[dataset_name][alg].get('training_time', 0)
                 
-                # Formatear los tiempos en segundos con 2 decimales
+                # Format times in seconds with 2 decimals
                 genetic_time_formatted = f"{genetic_time:.2f} seconds"
                 exhaustive_time_formatted = f"{exhaustive_time:.2f} seconds"
                 
@@ -151,19 +264,29 @@ class Visualizer:
         return df
     
     def create_best_hyperparams_dataframe(self):
-        """Crea un DataFrame con los hiperparámetros del mejor modelo según RMSE, solo para el dataset con mejor resultado."""
+        """
+        Create a DataFrame with hyperparameters of the best model by RMSE.
+        
+        This method identifies the dataset and algorithm with the best overall RMSE
+        performance and creates a DataFrame with the hyperparameters for both genetic
+        and exhaustive search approaches for that best model.
+        
+        Returns:
+            tuple: (DataFrame, str) - DataFrame with hyperparameters of the best performing model,
+                   and the name of the best algorithm
+        """
         data = []
         best_dataset = None
         best_algorithm = None
         best_rmse = float('inf')
         
-        # Encontrar el dataset y algoritmo con el mejor RMSE global
+        # Find the dataset and algorithm with the best global RMSE
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
                 genetic_rmse = self.results_genetic[dataset_name][alg]['rmse']
                 exhaustive_rmse = self.results_exhaustive[dataset_name][alg]['rmse']
                 
-                # Usar el mejor entre genético y exhaustivo
+                # Use the best between genetic and exhaustive
                 current_best_rmse = min(genetic_rmse, exhaustive_rmse)
                 
                 if current_best_rmse < best_rmse:
@@ -172,17 +295,17 @@ class Visualizer:
                     best_algorithm = alg
         
         if best_dataset and best_algorithm:
-            # Obtener los hiperparámetros y RMSE para el mejor modelo genético
+            # Get hyperparameters and RMSE for the best genetic model
             genetic_best = self.results_genetic[best_dataset][best_algorithm]
             genetic_time = genetic_best.get('training_time', 0)
             genetic_params = genetic_best['best_params']
             
-            # Obtener los hiperparámetros y RMSE para el mejor modelo exhaustivo
+            # Get hyperparameters and RMSE for the best exhaustive model
             exhaustive_best = self.results_exhaustive[best_dataset][best_algorithm]
             exhaustive_time = exhaustive_best.get('training_time', 0)
             exhaustive_params = exhaustive_best['best_params']
             
-            # Crear entrada para aproximación genética
+            # Create entry for genetic approach
             genetic_entry = {
                 'Dataset': best_dataset,
                 'Approach': 'Genetic',
@@ -191,11 +314,11 @@ class Visualizer:
                 'Time (seconds)': genetic_time
             }
             
-            # Añadir cada hiperparámetro como columna separada
+            # Add each hyperparameter as a separate column
             for param, value in genetic_params.items():
                 genetic_entry[param] = value
             
-            # Crear entrada para aproximación exhaustiva
+            # Create entry for exhaustive approach
             exhaustive_entry = {
                 'Dataset': best_dataset,
                 'Approach': 'Exhaustive',
@@ -204,7 +327,7 @@ class Visualizer:
                 'Time (seconds)': exhaustive_time
             }
             
-            # Añadir cada hiperparámetro como columna separada
+            # Add each hyperparameter as a separate column
             for param, value in exhaustive_params.items():
                 exhaustive_entry[param] = value
             
@@ -217,60 +340,47 @@ class Visualizer:
         return df, best_algorithm
     
     def create_best_algorithms_dataframe(self):
-        """Crea un DataFrame con los 3 mejores algoritmos según RMSE en general."""
-        data = []
-        all_algorithms = []
+        """
+        Create a DataFrame with the 3 best algorithms by RMSE overall.
         
-        # Recopilar todos los resultados de algoritmos de todos los datasets
+        This method collects all algorithm results from all datasets, sorts them by RMSE,
+        and returns the top 3 algorithms.
+        
+        Returns:
+            DataFrame: DataFrame with the top 3 algorithms by RMSE
+        """
+        data = []
+        
+        # Collect all algorithm results from all datasets
+        all_results = []
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
                 genetic_rmse = self.results_genetic[dataset_name][alg]['rmse']
                 exhaustive_rmse = self.results_exhaustive[dataset_name][alg]['rmse']
                 
-                # Usar el mejor entre genético y exhaustivo para cada algoritmo
-                best_approach = 'Genetic' if genetic_rmse <= exhaustive_rmse else 'Exhaustive'
+                # Use the best between genetic and exhaustive
                 best_rmse = min(genetic_rmse, exhaustive_rmse)
+                best_approach = 'Genetic' if genetic_rmse <= exhaustive_rmse else 'Exhaustive'
                 
-                all_algorithms.append({
-                    'dataset': dataset_name,
-                    'algorithm': alg,
-                    'approach': best_approach,
-                    'rmse': best_rmse
+                all_results.append({
+                    'Dataset': dataset_name,
+                    'Algorithm': alg,
+                    'RMSE': best_rmse,
+                    'Approach': best_approach
                 })
         
-        # Ordenar todos los algoritmos por RMSE (menor a mayor)
-        all_algorithms.sort(key=lambda x: x['rmse'])
+        # Sort by RMSE (ascending) and get the top 3
+        all_results.sort(key=lambda x: x['RMSE'])
+        top_algorithms = all_results[:3] if len(all_results) >= 3 else all_results
         
-        # Tomar los 3 mejores algoritmos en general
-        best_algorithms = all_algorithms[:3]
-        
-        # Crear entradas para los mejores algoritmos
-        for entry in best_algorithms:
-            dataset_name = entry['dataset']
-            alg = entry['algorithm']
-            approach = entry['approach']
-            
-            if approach == 'Genetic':
-                model_data = self.results_genetic[dataset_name][alg]
-            else:
-                model_data = self.results_exhaustive[dataset_name][alg]
-            
-            training_time = model_data.get('training_time', 0)
-            params = model_data['best_params']
-            
-            result_entry = {
-                'Dataset': dataset_name,
-                'Approach': approach,
-                'Algorithm': alg,
-                'RMSE': model_data['rmse'],
-                'Time (seconds)': training_time
-            }
-            
-            # Añadir cada hiperparámetro como columna separada
-            for param, value in params.items():
-                result_entry[param] = value
-            
-            data.append(result_entry)
+        # Create entries for the best algorithms
+        for result in top_algorithms:
+            data.append({
+                'Dataset': result['Dataset'],
+                'Algorithm': result['Algorithm'],
+                'RMSE': result['RMSE'],
+                'Approach': result['Approach']
+            })
         
         df = pd.DataFrame(data)
         # Ensure the dataframe is Arrow-compatible
@@ -278,32 +388,41 @@ class Visualizer:
         return df
     
     def export_results_to_excel(self):
-        """Exporta los resultados a un archivo Excel."""
+        """
+        Export the results to an Excel file.
+        
+        This method creates an Excel file with three sheets: General Results, Best Model,
+        and Top 3 Algorithms.
+        
+        Returns:
+            str: Path to the generated Excel file
+        """
         df_general = self.create_detailed_results_dataframe()
         df_best_hyperparams, best_algorithm = self.create_best_hyperparams_dataframe()
         df_best_algorithms = self.create_best_algorithms_dataframe()
         
-        # Crear directorio para resultados si no existe
-        results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
+        # Create directory for results if it doesn't exist
+        # Adjust path to be relative to the project root, not the components directory
+        results_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "results")
         os.makedirs(results_dir, exist_ok=True)
         
-        # Nombre del archivo con timestamp
+        # Filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = os.path.join(results_dir, f"framework_results_{timestamp}.xlsx")
         
-        # Crear un ExcelWriter para el archivo principal
+        # Create an ExcelWriter for the main file
         with pd.ExcelWriter(filename, engine='openpyxl') as writer:
-            # Escribir la tabla principal
+            # Write the main table
             df_general.to_excel(writer, sheet_name='General Results', index=False)
             
-            # Escribir la tabla de mejores hiperparámetros
+            # Write the best hyperparameters table
             best_hyperparams_sheet = f"Best Model - {best_algorithm}"
             df_best_hyperparams.to_excel(writer, sheet_name=best_hyperparams_sheet, index=False)
             
-            # Escribir la tabla de mejores algoritmos
+            # Write the best algorithms table
             df_best_algorithms.to_excel(writer, sheet_name='Top 3 Algorithms', index=False)
             
-            # Ajustar el ancho de las columnas para cada hoja
+            # Adjust the column width for each sheet
             for sheet_name in writer.sheets:
                 worksheet = writer.sheets[sheet_name]
                 df = None
@@ -323,7 +442,18 @@ class Visualizer:
         return filename
 
     def create_correlation_heatmap(self, dataset_name):
-        """Crea un heatmap de correlación para un dataset específico."""
+        """
+        Create a correlation heatmap for a specific dataset.
+        
+        This method generates a heatmap showing the correlation between features in the
+        specified dataset.
+        
+        Args:
+            dataset_name (str): Name of the dataset to create the heatmap for
+        
+        Returns:
+            plotly.graph_objs.Figure: Heatmap figure
+        """
         if dataset_name not in self.dfs:
             return go.Figure()  
         
@@ -341,18 +471,24 @@ class Visualizer:
         with st.sidebar:
             selected = option_menu(
                 menu_title="Main Menu",
-                options=["EDA", "Results"],
+                options=["Exploratory Data Analysis", "Results"],
                 menu_icon="cast",
                 default_index=0,
             )
 
-        if selected == "EDA":
+        if selected == "Exploratory Data Analysis":
             self.page_eda()
         elif selected == "Results":
             self.page_model_results()
             
     def page_eda(self):
-        st.title("Exploratory Data Analysis (EDA)")
+        """
+        Create the Exploratory Data Analysis page.
+        
+        This method generates a page with various visualizations and statistics for
+        exploratory data analysis.
+        """
+        st.title("Exploratory Data Analysis")
 
         selected_dataset = st.selectbox("Select the dataset:", list(self.dfs.keys()))
 
@@ -381,6 +517,12 @@ class Visualizer:
             self.create_correlation_heatmap(selected_dataset)
             
     def page_model_results(self):
+        """
+        Create the Model Results page.
+        
+        This method generates a page with various visualizations and statistics for
+        model results.
+        """
         st.title("Results")
 
         df_results = self.create_results_dataframe()

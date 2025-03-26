@@ -16,12 +16,52 @@ import time
 from sklearn.linear_model import LassoCV 
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, GridSearchCV
+from .utils.print_utils import (
+    print_model_training_start, print_model_training_complete,
+    print_subsection_header, print_info, print_success
+)
 
+"""
+Model Evaluation and Hyperparameter Optimization Module
+
+This module is responsible for evaluating machine learning models and optimizing their
+hyperparameters using both genetic algorithms and exhaustive grid search methods.
+It supports multiple regression algorithms and provides a comprehensive framework for
+comparing their performance under different optimization strategies.
+"""
 
 class ModelEvaluator:
-    """Componente evaluador: Se encarga del algoritmo genético y del exhaustivo."""
+    """
+    Model Evaluator class responsible for hyperparameter optimization and model evaluation.
+    
+    This class implements two approaches for hyperparameter optimization:
+    1. Genetic algorithm search using GASearchCV
+    2. Exhaustive grid search using GridSearchCV
+    
+    It supports multiple regression algorithms including Linear Regression, Decision Trees,
+    Random Forests, Lasso, Ridge, KNN, and XGBoost. Feature selection is performed using
+    LassoCV before model training to improve performance.
+    
+    Attributes:
+        X_train (DataFrame): Training feature set
+        X_test (DataFrame): Testing feature set
+        y_train (Series): Training target values
+        y_test (Series): Testing target values
+        models (dict): Dictionary of regression models to evaluate
+        param_grids_genetic (dict): Parameter search spaces for genetic algorithm
+        param_grids_exhaustive (dict): Parameter search spaces for exhaustive search
+    """
 
     def __init__(self, X_train, X_test, y_train, y_test):
+        """
+        Initialize the ModelEvaluator with training and testing data.
+        
+        Args:
+            X_train (DataFrame): Training feature set
+            X_test (DataFrame): Testing feature set
+            y_train (Series): Training target values
+            y_test (Series): Testing target values
+        """
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
@@ -39,7 +79,18 @@ class ModelEvaluator:
         self.param_grids_exhaustive = self._get_param_grids_exhaustive()
 
     def _get_param_grids_genetic(self):
-        """Define los espacios de búsqueda de parámetros para cada modelo."""
+        """
+        Define parameter search spaces for genetic algorithm optimization.
+        
+        This method creates a dictionary of parameter search spaces for each model
+        using the specific format required by GASearchCV. Parameters include:
+        - Continuous: For floating-point parameters with a range
+        - Integer: For integer parameters with a range
+        - Categorical: For parameters with discrete choices
+        
+        Returns:
+            dict: Parameter search spaces for each model for genetic algorithm
+        """
         return {
             'LinearRegression': {
                 "clf__copy_X": Categorical([True, False]),
@@ -86,7 +137,17 @@ class ModelEvaluator:
         }
     
     def _get_param_grids_exhaustive(self):
-        """Define los espacios de búsqueda de parámetros para el método exhaustivo."""
+        """
+        Define parameter search spaces for exhaustive grid search optimization.
+        
+        This method creates a dictionary of parameter search spaces for each model
+        using the format required by GridSearchCV. Unlike the genetic algorithm approach,
+        this uses discrete values for all parameters, which makes it more computationally
+        intensive but potentially more thorough.
+        
+        Returns:
+            dict: Parameter search spaces for each model for exhaustive grid search
+        """
         return {
             
             'LinearRegression': {
@@ -134,23 +195,47 @@ class ModelEvaluator:
         }
 
     def genetic_search(self):
-        """Realiza la búsqueda genética de hiperparámetros para cada modelo."""
+        """
+        Perform genetic algorithm-based hyperparameter optimization for each model.
+        
+        This method:
+        1. Applies feature selection using LassoCV
+        2. Creates a pipeline with feature selection and the model
+        3. Uses GASearchCV to find optimal hyperparameters through genetic evolution
+        4. Measures and records training time for each model
+        5. Returns the best parameters, best estimator, and training time for each model
+        
+        Returns:
+            dict: Results dictionary containing best parameters, estimator, and training time for each model
+        """
+        print_subsection_header("Genetic Algorithm Hyperparameter Optimization")
+        print_info(f"Training {len(self.models)} models using genetic algorithm approach")
+        
         results = {}
+        model_count = len(self.models)
+        model_index = 0
+        
         for name, model in self.models.items():
+            model_index += 1
+            print_model_training_start(name, "genetic")
+            
+            # Feature selection with LassoCV
             lasso_cv = LassoCV(cv=5) 
             lasso_cv.fit(self.X_train, self.y_train)
             f_selection = SelectFromModel(lasso_cv)
             self.X_train = f_selection.transform(self.X_train)
             self.X_test = f_selection.transform(self.X_test)
+            
+            # Create pipeline
             pl = Pipeline([
               ('fs', f_selection), 
               ('clf', model), 
             ])            
-            print(f"Entrenando {name} con método genético...")
             
-            # Medir el tiempo de inicio
+            # Measure start time
             start_time = time.time()
             
+            # Train model using genetic algorithm
             evolved_estimator = GASearchCV(
                 estimator=pl,
                 cv=5,
@@ -169,33 +254,68 @@ class ModelEvaluator:
             )
             evolved_estimator.fit(self.X_train, self.y_train)
             
-            # Calcular el tiempo de entrenamiento
+            # Calculate training time
             training_time = time.time() - start_time
             
+            # Store results
             results[name] = {
                 'best_params': evolved_estimator.best_params_,
                 'estimator': evolved_estimator.best_estimator_,
-                'training_time': training_time  # Añadir el tiempo de entrenamiento
+                'training_time': training_time
             }
+            
+            # Print completion message
+            print_model_training_complete(
+                name, 
+                "genetic", 
+                training_time, 
+                {"neg_mse": evolved_estimator.best_score_}
+            )
+            
+        print_success(f"Completed genetic algorithm training for {model_count} models")
         return results
 
     def exhaustive_search(self):
-        """Realiza la búsqueda exhaustiva de hiperparámetros para cada modelo."""
+        """
+        Perform exhaustive grid search-based hyperparameter optimization for each model.
+        
+        This method:
+        1. Applies feature selection using LassoCV
+        2. Creates a pipeline with the model
+        3. Uses GridSearchCV to find optimal hyperparameters through exhaustive search
+        4. Measures and records training time for each model
+        5. Returns the best parameters, best estimator, and training time for each model
+        
+        Returns:
+            dict: Results dictionary containing best parameters, estimator, and training time for each model
+        """
+        print_subsection_header("Exhaustive Grid Search Hyperparameter Optimization")
+        print_info(f"Training {len(self.models)} models using exhaustive grid search approach")
+        
         results = {}
+        model_count = len(self.models)
+        model_index = 0
+        
         for name, model in self.models.items():
+            model_index += 1
+            print_model_training_start(name, "exhaustive")
+            
+            # Feature selection with LassoCV
             lasso_cv = LassoCV(cv=5) 
             lasso_cv.fit(self.X_train, self.y_train)
             f_selection = SelectFromModel(lasso_cv)
             self.X_train = f_selection.transform(self.X_train)
             self.X_test = f_selection.transform(self.X_test)
+            
+            # Create pipeline
             pl = Pipeline([
               ('clf', model), 
             ])
-            print(f"Entrenando {name} con método exhaustivo...")
             
-            # Medir el tiempo de inicio
+            # Measure start time
             start_time = time.time()
             
+            # Train model using grid search
             grid_search = GridSearchCV(
                 estimator=pl,
                 param_grid=self.param_grids_exhaustive[name],
@@ -206,12 +326,23 @@ class ModelEvaluator:
             )
             grid_search.fit(self.X_train, self.y_train)
             
-            # Calcular el tiempo de entrenamiento
+            # Calculate training time
             training_time = time.time() - start_time
             
+            # Store results
             results[name] = {
                 'best_params': grid_search.best_params_,
                 'estimator': grid_search.best_estimator_,
-                'training_time': training_time  # Añadir el tiempo de entrenamiento
+                'training_time': training_time
             }
+            
+            # Print completion message
+            print_model_training_complete(
+                name, 
+                "exhaustive", 
+                training_time, 
+                {"neg_mse": grid_search.best_score_}
+            )
+            
+        print_success(f"Completed exhaustive grid search training for {model_count} models")
         return results

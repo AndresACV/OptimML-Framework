@@ -1,15 +1,32 @@
 import streamlit as st
+
+# Configure Streamlit page - MUST be the first Streamlit command
+st.set_page_config(
+    page_title="OptimML Framework Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 import pandas as pd
 import numpy as np
 import warnings
 import os
 import sys
 
-# Add the current directory to the path so we can import modules
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+"""
+OptimML Framework - Main Application Entry Point
+
+This file serves as the entry point for the OptimML Framework application.
+It configures the environment, sets up the Streamlit interface, and launches
+the main application functionality from the components package.
+"""
+
+# Add the components directory to the path so we can import modules
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "components"))
 
 # Import the main application module
-import CMain
+from components import CMain
 
 # Configure pandas to avoid Arrow serialization issues
 pd.options.mode.copy_on_write = True
@@ -24,15 +41,15 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# Create a Streamlit app wrapper
 def main():
-    st.set_page_config(
-        page_title="Framework Dashboard",
-        page_icon="📊",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
+    """
+    Main application function that launches the application.
     
+    This function calls the main function from the CMain module,
+    which handles the core application logic.
+    
+    Exceptions are caught and displayed to the user in a friendly format.
+    """
     # Call the main function from CMain
     try:
         CMain.main()
