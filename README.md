@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/logo.png" alt="OptimML Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/AndresACV/OptimML-Framework/main/assets/logo.png" alt="OptimML Logo" width="400"/>
 </p>
 
 > A comprehensive machine learning framework for automated model selection and hyperparameter optimization using both genetic algorithms and exhaustive search methods. This interactive dashboard allows users to analyze datasets, train multiple ML models, and visualize results through an intuitive Streamlit interface.
