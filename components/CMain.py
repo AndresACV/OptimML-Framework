@@ -156,7 +156,18 @@ def main():
     print_info("This may take some time depending on the dataset size and complexity")
     
     model_training_start = time.time()
-    results_genetic, results_exhaustive, genetic_evaluation, exhaustive_evaluation = cV.train_models(X_trains, X_tests, y_trains, y_tests)
+    (
+        results_genetic,
+        results_exhaustive,
+        results_pso,
+        results_cdea,
+        results_abc,
+        genetic_evaluation,
+        exhaustive_evaluation,
+        pso_evaluation,
+        cdea_evaluation,
+        abc_evaluation
+    ) = cV.train_models(X_trains, X_tests, y_trains, y_tests)
     model_training_duration = time.time() - model_training_start
     
     print_success(f"Model training complete in {model_training_duration:.2f} seconds")
@@ -165,7 +176,14 @@ def main():
     print_section_header("Creating Visualization Dashboard")
     print_info("Initializing Streamlit dashboard...")
 
-    visualizer = cV.Visualizer(genetic_evaluation, exhaustive_evaluation, dfs)
+    visualizer = cV.Visualizer(
+        genetic_evaluation,
+        exhaustive_evaluation,
+        pso_evaluation,
+        cdea_evaluation,
+        abc_evaluation,
+        dfs
+    )
     visualizer.create_dashboard()
     
     # Print execution summary

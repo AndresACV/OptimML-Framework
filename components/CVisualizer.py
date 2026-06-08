@@ -73,11 +73,10 @@ def load_and_process_data(csv_files, use_sql, db_params):
 @st.cache_data
 def train_models(X_trains, X_tests, y_trains, y_tests):
     """
-    Train models using both genetic and exhaustive search methods.
+    Train models using genetic, exhaustive, PSO, CDEA, and ABC search methods.
     
-    This function trains models for each dataset using both genetic algorithm and
-    exhaustive search approaches for hyperparameter optimization, and evaluates
-    their performance.
+    This function trains models for each dataset using five different hyperparameter
+    optimization strategies and evaluates their performance.
     
     Args:
         X_trains (dict): Dictionary of training feature sets by dataset name
@@ -86,37 +85,58 @@ def train_models(X_trains, X_tests, y_trains, y_tests):
         y_tests (dict): Dictionary of testing target values by dataset name
         
     Returns:
-        tuple: (results_genetic, results_exhaustive, genetic_evaluation, exhaustive_evaluation) containing:
-            - results_genetic (dict): Results from genetic algorithm optimization
-            - results_exhaustive (dict): Results from exhaustive search optimization
-            - genetic_evaluation (dict): Evaluation metrics for genetic algorithm models
-            - exhaustive_evaluation (dict): Evaluation metrics for exhaustive search models
+        tuple: Results and evaluation dictionaries for each optimization strategy.
     """
     print_section_header("Model Training")
     
     results_genetic = {}
     results_exhaustive = {}
+    results_pso = {}
+    results_cdea = {}
+    results_abc = {}
 
     for dataset_name in X_trains.keys():
         print_subsection_header(f"Training models for dataset: {dataset_name}")
-        
-        evaluator = cE.ModelEvaluator(X_trains[dataset_name], X_tests[dataset_name], 
-                                   y_trains[dataset_name], y_tests[dataset_name])
+
+        evaluator = cE.ModelEvaluator(
+            X_trains[dataset_name], X_tests[dataset_name],
+            y_trains[dataset_name], y_tests[dataset_name]
+        )
+
         results_genetic[dataset_name] = evaluator.genetic_search()
-        X_tests[dataset_name] = evaluator.X_train
-        X_tests[dataset_name] = evaluator.X_test      
         results_exhaustive[dataset_name] = evaluator.exhaustive_search()
+        results_pso[dataset_name] = evaluator.pso_search()
+        results_cdea[dataset_name] = evaluator.cdea_search()
+        results_abc[dataset_name] = evaluator.abc_search()
 
     genetic_evaluation = {}
     exhaustive_evaluation = {}
+    pso_evaluation = {}
+    cdea_evaluation = {}
+    abc_evaluation = {}
+
     for dataset_name in X_trains.keys():
         predictor = cP.Predictor(X_tests[dataset_name], y_tests[dataset_name])
         genetic_evaluation[dataset_name] = predictor.evaluate_results(results_genetic[dataset_name])
         exhaustive_evaluation[dataset_name] = predictor.evaluate_results(results_exhaustive[dataset_name])
+        pso_evaluation[dataset_name] = predictor.evaluate_results(results_pso[dataset_name])
+        cdea_evaluation[dataset_name] = predictor.evaluate_results(results_cdea[dataset_name])
+        abc_evaluation[dataset_name] = predictor.evaluate_results(results_abc[dataset_name])
 
     print_success("Model training complete")
     
-    return results_genetic, results_exhaustive, genetic_evaluation, exhaustive_evaluation
+    return (
+        results_genetic,
+        results_exhaustive,
+        results_pso,
+        results_cdea,
+        results_abc,
+        genetic_evaluation,
+        exhaustive_evaluation,
+        pso_evaluation,
+        cdea_evaluation,
+        abc_evaluation
+    )
 
 
 class Visualizer:
@@ -130,20 +150,37 @@ class Visualizer:
     Attributes:
         results_genetic (dict): Results from genetic algorithm optimization
         results_exhaustive (dict): Results from exhaustive search optimization
+        results_pso (dict): Results from PSO optimization
+        results_cdea (dict): Results from CDEA optimization
+        results_abc (dict): Results from ABC optimization
         dfs (dict): Dictionary of original dataframes by dataset name
     """
     
-    def __init__(self, results_genetic, results_exhaustive, dfs):
+    def __init__(
+        self,
+        results_genetic,
+        results_exhaustive,
+        results_pso,
+        results_cdea,
+        results_abc,
+        dfs
+    ):
         """
         Initialize the Visualizer with model results and data.
         
         Args:
             results_genetic (dict): Results from genetic algorithm optimization
             results_exhaustive (dict): Results from exhaustive search optimization
+            results_pso (dict): Results from PSO optimization
+            results_cdea (dict): Results from CDEA optimization
+            results_abc (dict): Results from ABC optimization
             dfs (dict): Dictionary of original dataframes by dataset name
         """
         self.results_genetic = results_genetic
         self.results_exhaustive = results_exhaustive
+        self.results_pso = results_pso
+        self.results_cdea = results_cdea
+        self.results_abc = results_abc
         self.dfs = dfs
         
     def ensure_arrow_compatible(self, df):
@@ -188,35 +225,37 @@ class Visualizer:
         """
         Create a summary DataFrame with model performance results.
         
-        This method compiles the results from both genetic and exhaustive search
-        approaches into a single DataFrame for easy comparison, including RMSE
-        and training time for each algorithm and dataset.
+        This method compiles the results from multiple search approaches into a
+        single DataFrame for easy comparison, including RMSE and training time for
+        each algorithm and dataset.
         
         Returns:
             DataFrame: Summary DataFrame with model performance metrics
         """
         data = []
+        methods = [
+            ('Genetic', self.results_genetic),
+            ('Exhaustive', self.results_exhaustive),
+            ('PSO', self.results_pso),
+            ('CDEA', self.results_cdea),
+            ('ABC', self.results_abc)
+        ]
+
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
-                # Get training times
-                genetic_time = self.results_genetic[dataset_name][alg].get('training_time', 0)
-                exhaustive_time = self.results_exhaustive[dataset_name][alg].get('training_time', 0)
-                
-                # Format times in seconds with 2 decimals
-                genetic_time_formatted = f"{genetic_time:.2f} s"
-                exhaustive_time_formatted = f"{exhaustive_time:.2f} s"
-                
-                data.append({
+                row = {
                     'Dataset': dataset_name,
-                    'Algorithm': alg,
-                    'RMSE (Genetic)': self.results_genetic[dataset_name][alg]['rmse'],
-                    'Time (G)': genetic_time_formatted,
-                    'RMSE (Exhaustive)': self.results_exhaustive[dataset_name][alg]['rmse'],
-                    'Time (E)': exhaustive_time_formatted
-                })
+                    'Algorithm': alg
+                }
+                for label, results in methods:
+                    time_value = results[dataset_name][alg].get('training_time', 0)
+                    row[f'RMSE ({label})'] = results[dataset_name][alg]['rmse']
+                    row[f'Time ({label[0]})'] = f"{time_value:.2f} s"
+                data.append(row)
+
         df = pd.DataFrame(data)
-        df.sort_values(by=['RMSE (Genetic)', 'RMSE (Exhaustive)'], ascending=[True, True], inplace=True)
-        # Ensure the dataframe is Arrow-compatible
+        sort_cols = [f'RMSE ({label})' for label, _ in methods]
+        df.sort_values(by=sort_cols, ascending=True, inplace=True)
         df = self.ensure_arrow_compatible(df)
         return df
     
@@ -226,40 +265,35 @@ class Visualizer:
         
         This method creates a comprehensive DataFrame with detailed information
         about each model's performance, including hyperparameters, RMSE, and
-        training time for both genetic and exhaustive search approaches.
+        training time for every search approach.
         
         Returns:
             DataFrame: Detailed DataFrame with model performance and hyperparameters
         """
         data = []
-        
+        methods = [
+            ('Genetic', self.results_genetic),
+            ('Exhaustive', self.results_exhaustive),
+            ('PSO', self.results_pso),
+            ('CDEA', self.results_cdea),
+            ('ABC', self.results_abc)
+        ]
+
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
-                # Convert parameters to text format for Excel
-                genetic_params = json.dumps(self.results_genetic[dataset_name][alg]['best_params'])
-                exhaustive_params = json.dumps(self.results_exhaustive[dataset_name][alg]['best_params'])
-                
-                # Get training times
-                genetic_time = self.results_genetic[dataset_name][alg].get('training_time', 0)
-                exhaustive_time = self.results_exhaustive[dataset_name][alg].get('training_time', 0)
-                
-                # Format times in seconds with 2 decimals
-                genetic_time_formatted = f"{genetic_time:.2f} seconds"
-                exhaustive_time_formatted = f"{exhaustive_time:.2f} seconds"
-                
-                data.append({
+                row = {
                     'Dataset': dataset_name,
-                    'Algorithm': alg,
-                    'RMSE (Genetic)': self.results_genetic[dataset_name][alg]['rmse'],
-                    'Hyperparameters (Genetic)': genetic_params,
-                    'Training Time (Genetic)': genetic_time_formatted,
-                    'RMSE (Exhaustive)': self.results_exhaustive[dataset_name][alg]['rmse'],
-                    'Hyperparameters (Exhaustive)': exhaustive_params,
-                    'Training Time (Exhaustive)': exhaustive_time_formatted
-                })
-        
+                    'Algorithm': alg
+                }
+                for label, results in methods:
+                    params = json.dumps(results[dataset_name][alg]['best_params'])
+                    training_time = results[dataset_name][alg].get('training_time', 0)
+                    row[f'RMSE ({label})'] = results[dataset_name][alg]['rmse']
+                    row[f'Hyperparameters ({label})'] = params
+                    row[f'Training Time ({label})'] = f"{training_time:.2f} seconds"
+                data.append(row)
+
         df = pd.DataFrame(data)
-        # Ensure the dataframe is Arrow-compatible
         df = self.ensure_arrow_compatible(df)
         return df
     
@@ -268,8 +302,8 @@ class Visualizer:
         Create a DataFrame with hyperparameters of the best model by RMSE.
         
         This method identifies the dataset and algorithm with the best overall RMSE
-        performance and creates a DataFrame with the hyperparameters for both genetic
-        and exhaustive search approaches for that best model.
+        performance and creates a DataFrame with the hyperparameters for all search
+        approaches for that best model.
         
         Returns:
             tuple: (DataFrame, str) - DataFrame with hyperparameters of the best performing model,
@@ -279,63 +313,38 @@ class Visualizer:
         best_dataset = None
         best_algorithm = None
         best_rmse = float('inf')
-        
-        # Find the dataset and algorithm with the best global RMSE
+        methods = [
+            ('Genetic', self.results_genetic),
+            ('Exhaustive', self.results_exhaustive),
+            ('PSO', self.results_pso),
+            ('CDEA', self.results_cdea),
+            ('ABC', self.results_abc)
+        ]
+
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
-                genetic_rmse = self.results_genetic[dataset_name][alg]['rmse']
-                exhaustive_rmse = self.results_exhaustive[dataset_name][alg]['rmse']
-                
-                # Use the best between genetic and exhaustive
-                current_best_rmse = min(genetic_rmse, exhaustive_rmse)
-                
-                if current_best_rmse < best_rmse:
-                    best_rmse = current_best_rmse
-                    best_dataset = dataset_name
-                    best_algorithm = alg
-        
+                for label, results in methods:
+                    score = results[dataset_name][alg]['rmse']
+                    if score < best_rmse:
+                        best_rmse = score
+                        best_dataset = dataset_name
+                        best_algorithm = alg
+
         if best_dataset and best_algorithm:
-            # Get hyperparameters and RMSE for the best genetic model
-            genetic_best = self.results_genetic[best_dataset][best_algorithm]
-            genetic_time = genetic_best.get('training_time', 0)
-            genetic_params = genetic_best['best_params']
-            
-            # Get hyperparameters and RMSE for the best exhaustive model
-            exhaustive_best = self.results_exhaustive[best_dataset][best_algorithm]
-            exhaustive_time = exhaustive_best.get('training_time', 0)
-            exhaustive_params = exhaustive_best['best_params']
-            
-            # Create entry for genetic approach
-            genetic_entry = {
-                'Dataset': best_dataset,
-                'Approach': 'Genetic',
-                'Algorithm': best_algorithm,
-                'RMSE': genetic_best['rmse'],
-                'Time (seconds)': genetic_time
-            }
-            
-            # Add each hyperparameter as a separate column
-            for param, value in genetic_params.items():
-                genetic_entry[param] = value
-            
-            # Create entry for exhaustive approach
-            exhaustive_entry = {
-                'Dataset': best_dataset,
-                'Approach': 'Exhaustive',
-                'Algorithm': best_algorithm,
-                'RMSE': exhaustive_best['rmse'],
-                'Time (seconds)': exhaustive_time
-            }
-            
-            # Add each hyperparameter as a separate column
-            for param, value in exhaustive_params.items():
-                exhaustive_entry[param] = value
-            
-            data.append(genetic_entry)
-            data.append(exhaustive_entry)
-        
+            for label, results in methods:
+                best_result = results[best_dataset][best_algorithm]
+                entry = {
+                    'Dataset': best_dataset,
+                    'Approach': label,
+                    'Algorithm': best_algorithm,
+                    'RMSE': best_result['rmse'],
+                    'Time (seconds)': best_result.get('training_time', 0)
+                }
+                for param, value in best_result['best_params'].items():
+                    entry[param] = value
+                data.append(entry)
+
         df = pd.DataFrame(data)
-        # Ensure the dataframe is Arrow-compatible
         df = self.ensure_arrow_compatible(df)
         return df, best_algorithm
     
@@ -350,30 +359,28 @@ class Visualizer:
             DataFrame: DataFrame with the top 3 algorithms by RMSE
         """
         data = []
-        
-        # Collect all algorithm results from all datasets
+        methods = [
+            ('Genetic', self.results_genetic),
+            ('Exhaustive', self.results_exhaustive),
+            ('PSO', self.results_pso),
+            ('CDEA', self.results_cdea),
+            ('ABC', self.results_abc)
+        ]
+
         all_results = []
         for dataset_name in self.results_genetic.keys():
             for alg in self.results_genetic[dataset_name].keys():
-                genetic_rmse = self.results_genetic[dataset_name][alg]['rmse']
-                exhaustive_rmse = self.results_exhaustive[dataset_name][alg]['rmse']
-                
-                # Use the best between genetic and exhaustive
-                best_rmse = min(genetic_rmse, exhaustive_rmse)
-                best_approach = 'Genetic' if genetic_rmse <= exhaustive_rmse else 'Exhaustive'
-                
-                all_results.append({
-                    'Dataset': dataset_name,
-                    'Algorithm': alg,
-                    'RMSE': best_rmse,
-                    'Approach': best_approach
-                })
-        
-        # Sort by RMSE (ascending) and get the top 3
+                for label, results in methods:
+                    all_results.append({
+                        'Dataset': dataset_name,
+                        'Algorithm': alg,
+                        'RMSE': results[dataset_name][alg]['rmse'],
+                        'Approach': label
+                    })
+
         all_results.sort(key=lambda x: x['RMSE'])
         top_algorithms = all_results[:3] if len(all_results) >= 3 else all_results
-        
-        # Create entries for the best algorithms
+
         for result in top_algorithms:
             data.append({
                 'Dataset': result['Dataset'],
@@ -381,9 +388,8 @@ class Visualizer:
                 'RMSE': result['RMSE'],
                 'Approach': result['Approach']
             })
-        
+
         df = pd.DataFrame(data)
-        # Ensure the dataframe is Arrow-compatible
         df = self.ensure_arrow_compatible(df)
         return df
     
@@ -531,23 +537,25 @@ class Visualizer:
         selected_dataset = st.selectbox("Select the dataset:", all_datasets)
         selected_algorithm = st.selectbox("Select the algorithm", all_algorithms)
 
-        # Display RMSE comparison bar chart
+        methods = [
+            ('Genetic', 'RMSE (Genetic)'),
+            ('Exhaustive', 'RMSE (Exhaustive)'),
+            ('PSO', 'RMSE (PSO)'),
+            ('CDEA', 'RMSE (CDEA)'),
+            ('ABC', 'RMSE (ABC)')
+        ]
+
         df_results_filtered = df_results[df_results['Dataset'] == selected_dataset]
         comparison_fig = go.Figure()
-        comparison_fig.add_trace(go.Bar(
-            x=df_results_filtered['Algorithm'],
-            y=df_results_filtered['RMSE (Genetic)'],
-            name='Genetic',
-            marker_color='blue'
-        ))
-        comparison_fig.add_trace(go.Bar(
-            x=df_results_filtered['Algorithm'],
-            y=df_results_filtered['RMSE (Exhaustive)'],
-            name='Exhaustive',
-            marker_color='red'
-        ))
+        for label, column_name in methods:
+            comparison_fig.add_trace(go.Bar(
+                x=df_results_filtered['Algorithm'],
+                y=df_results_filtered[column_name],
+                name=label
+            ))
+
         comparison_fig.update_layout(
-            title=f'RMSE Comparison: Genetic vs Exhaustive ({selected_dataset})',
+            title=f'RMSE Comparison by Optimization Approach ({selected_dataset})',
             xaxis_title='Algorithm',
             yaxis_title='RMSE',
             barmode='group'
@@ -555,10 +563,15 @@ class Visualizer:
         st.plotly_chart(comparison_fig)
 
         st.subheader(f"Best parameters for {selected_algorithm} ({selected_dataset}):")
-        st.markdown("**Genetic Method:**")
-        st.json(self.results_genetic[selected_dataset][selected_algorithm]['best_params'])
-        st.markdown("**Exhaustive Method:**")
-        st.json(self.results_exhaustive[selected_dataset][selected_algorithm]['best_params'])
+        for label, results in [
+            ('Genetic', self.results_genetic),
+            ('Exhaustive', self.results_exhaustive),
+            ('PSO', self.results_pso),
+            ('CDEA', self.results_cdea),
+            ('ABC', self.results_abc)
+        ]:
+            st.markdown(f"**{label} Method:**")
+            st.json(results[selected_dataset][selected_algorithm]['best_params'])
 
         st.subheader("Results Table")
         st.dataframe(df_results)
