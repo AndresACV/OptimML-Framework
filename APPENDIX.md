@@ -15,167 +15,94 @@
 | log4j-1 | 21 | 135 | Logging utility for Java applications (Apache Log4j). |
 | xerces-1 | 21 | 437 | XML parser and toolkit (Apache Xerces). |
 
-## Table 2: Comparison of Genetic and Exhaustive approaches with Lasso algorithm
+## Table 2: Comparison of Lasso across bioinspired approaches
 
 | Dataset | Approach | Algorithm | RMSE | Time (s) | alpha | fit_intercept | max_iter | tol | selection |
 |---------|----------|-----------|------|----------|-------|---------------|----------|-----|-----------|
-| poi-2 | Exhaustive | Lasso | 0.222 | 2.486 | 1 | True | 1405 | 3.66e-4 | cyclic |
-| poi-2 | Genetic | Lasso | 0.222 | 0.052 | 1 | True | 1000 | 1.00e-4 | cyclic |
+| poi-2 | Genetic | Lasso | 0.2218620362949892 | 0.3353297710418701 | 1 | True | 1163 | 0.0002901468594269344 | random |
+| poi-2 | PSO | Lasso | 0.2218620362949892 | 0.3476696014404297 | 1 | True | 1000 | 0.0001 | cyclic |
+| poi-2 | CDEA | Lasso | 0.2218620362949892 | 0.3487777709960938 | 1 | True | 2000 | 0.0001 | random |
+| poi-2 | ABC | Lasso | 0.2218620362949892 | 0.8038005828857422 | 1 | True | 2000 | 0.001 | random |
 
-## Table 3: Comparison of Different Algorithms and Approaches
+## Table 3: Comparison of Different Algorithms and Bioinspired Approaches
 
 | Dataset | Approach | Algorithm | RMSE | Time (s) | clf__alpha | clf__fit_intercept | clf__max_iter | clf__tol | clf__selection | clf__colsample_bytree | clf__learning_rate | clf__max_depth | clf__n_estimators | clf__min_samples_split |
 |---------|----------|-----------|------|----------|------------|-------------------|---------------|----------|----------------|----------------------|-------------------|---------------|------------------|----------------------|
-| poi-2 | Exhaustive | Lasso | 0.222 | 2.486 | 1 | True | 1405 | 3.66e-4 | cyclic | -- | -- | -- | -- | -- |
-| poi-2 | Genetic | XGBRegressor | 0.222 | 0.316 | -- | -- | -- | -- | -- | 1 | 0.01 | 3 | 100 | -- |
-| tomcat | Exhaustive | RandomForestRegressor | 0.230 | 7.271 | -- | -- | -- | -- | -- | -- | -- | 6 | 89 | 4 |
+| poi-2 | Genetic | Lasso | 0.2218620362949892 | 0.34 seconds | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
+| poi-2 | PSO | Lasso | 0.2218620362949892 | 0.35 seconds | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
+| poi-2 | CDEA | Lasso | 0.2218620362949892 | 0.35 seconds | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
+| poi-2 | ABC | Lasso | 0.2218620362949892 | 0.80 seconds | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
+| poi-2 | Genetic | XGBRegressor | 0.2368127468642922 | 0.75 seconds | -- | -- | -- | -- | -- | 0.8705562941036851 | 0.03541381321878839 | 3 | 76 | -- |
+| poi-2 | PSO | XGBRegressor | 0.2235375323017195 | 0.88 seconds | -- | -- | -- | -- | -- | 0.8 | 0.01 | 3 | 100 | -- |
+| poi-2 | CDEA | XGBRegressor | 0.2222223430866861 | 0.78 seconds | -- | -- | -- | -- | -- | 1.0 | 0.01 | 3 | 100 | -- |
+| poi-2 | ABC | XGBRegressor | 0.2501156367404922 | 1.68 seconds | -- | -- | -- | -- | -- | 1.0 | 0.1 | 3 | 50 | -- |
+| tomcat | Genetic | RandomForestRegressor | 0.2363814958163347 | 2.96 seconds | -- | -- | -- | -- | -- | -- | -- | 5 | 52 | 2 |
+| tomcat | PSO | RandomForestRegressor | 0.2360555139550304 | 3.78 seconds | -- | -- | -- | -- | -- | -- | -- | 5 | 50 | 2 |
+| tomcat | CDEA | RandomForestRegressor | 0.2360555139550304 | 3.94 seconds | -- | -- | -- | -- | -- | -- | -- | 5 | 50 | 2 |
+| tomcat | ABC | RandomForestRegressor | 0.2360555139550304 | 8.16 seconds | -- | -- | -- | -- | -- | -- | -- | 5 | 50 | 2 |
 
-## Table 4: Training time comparison between Genetic and Exhaustive approaches with performance statistics
+## Table 4: Training time comparison among Bioinspired approaches
 
-| Dataset | Algorithm | Exhaustive Time (s) | Genetic Time (s) | Speedup Factor | Time Overhead (%) |
-|---------|-----------|-------------------|-----------------|----------------|------------------|
-| ant-1 | LinearRegression | 6.52 | 0.05 | 130.40x | 13,040 |
-| ant-1 | DecisionTreeRegressor | 3.23 | 0.12 | 26.92x | 2,592 |
-| ant-1 | RandomForestRegressor | 8.38 | 0.96 | 8.73x | 773 |
-| ant-1 | Lasso | 3.28 | 0.05 | 65.60x | 6,460 |
-| ant-1 | Ridge | 3.09 | 0.05 | 61.80x | 6,080 |
-| ant-1 | KNeighborsRegressor | 3.57 | 0.07 | 51.00x | 5,000 |
-| ant-1 | XGBRegressor | 4.21 | 0.78 | 5.40x | 440 |
-| camel-1 | LinearRegression | 2.76 | 0.04 | 69.00x | 6,800 |
-| camel-1 | DecisionTreeRegressor | 2.59 | 0.10 | 25.90x | 2,490 |
-| camel-1 | RandomForestRegressor | 5.79 | 0.54 | 10.72x | 972 |
-| camel-1 | Lasso | 2.56 | 0.05 | 51.20x | 5,020 |
-| camel-1 | Ridge | 2.87 | 0.04 | 71.75x | 7,075 |
-| camel-1 | KNeighborsRegressor | 2.62 | 0.06 | 43.67x | 4,267 |
-| camel-1 | XGBRegressor | 3.54 | 0.38 | 9.32x | 832 |
-| ivy-2 | LinearRegression | 2.26 | 0.05 | 45.20x | 4,420 |
-| ivy-2 | DecisionTreeRegressor | 2.75 | 0.09 | 30.56x | 2,956 |
-| ivy-2 | RandomForestRegressor | 5.53 | 0.46 | 12.02x | 1,102 |
-| ivy-2 | Lasso | 2.43 | 0.05 | 48.60x | 4,760 |
-| ivy-2 | Ridge | 2.81 | 0.04 | 70.25x | 6,925 |
-| ivy-2 | KNeighborsRegressor | 2.56 | 0.06 | 42.67x | 4,167 |
-| ivy-2 | XGBRegressor | 3.47 | 0.35 | 9.91x | 891 |
-| jedit-4D | LinearRegression | 2.67 | 0.04 | 66.75x | 6,575 |
-| jedit-4D | DecisionTreeRegressor | 2.44 | 0.09 | 27.11x | 2,611 |
-| jedit-4D | RandomForestRegressor | 5.76 | 0.47 | 12.26x | 1,126 |
-| jedit-4D | Lasso | 2.35 | 0.05 | 47.00x | 4,600 |
-| jedit-4D | Ridge | 2.64 | 0.04 | 66.00x | 6,500 |
-| jedit-4D | KNeighborsRegressor | 2.64 | 0.06 | 44.00x | 4,300 |
-| jedit-4D | XGBRegressor | 3.23 | 0.35 | 9.23x | 823 |
-| log4j-1 | LinearRegression | 2.59 | 0.04 | 64.75x | 6,375 |
-| log4j-1 | DecisionTreeRegressor | 2.80 | 0.09 | 31.11x | 3,011 |
-| log4j-1 | RandomForestRegressor | 5.31 | 0.46 | 11.54x | 1,054 |
-| log4j-1 | Lasso | 2.92 | 0.05 | 58.40x | 5,740 |
-| log4j-1 | Ridge | 2.83 | 0.04 | 70.75x | 6,975 |
-| log4j-1 | KNeighborsRegressor | 2.80 | 0.06 | 46.67x | 4,567 |
-| log4j-1 | XGBRegressor | 3.31 | 0.36 | 9.19x | 819 |
-| poi-2 | LinearRegression | 2.60 | 0.04 | 65.00x | 6,400 |
-| poi-2 | DecisionTreeRegressor | 2.71 | 0.09 | 30.11x | 2,911 |
-| poi-2 | RandomForestRegressor | 5.49 | 0.40 | 13.73x | 1,273 |
-| poi-2 | Lasso | 2.49 | 0.05 | 49.80x | 4,880 |
-| poi-2 | Ridge | 2.78 | 0.04 | 69.50x | 6,850 |
-| poi-2 | KNeighborsRegressor | 2.42 | 0.06 | 40.33x | 3,933 |
-| poi-2 | XGBRegressor | 3.29 | 0.32 | 10.28x | 928 |
-| tomcat | LinearRegression | 2.62 | 0.05 | 52.40x | 5,140 |
-| tomcat | DecisionTreeRegressor | 2.47 | 0.10 | 24.70x | 2,370 |
-| tomcat | RandomForestRegressor | 7.27 | 0.61 | 11.92x | 1,092 |
-| tomcat | Lasso | 2.80 | 0.05 | 56.00x | 5,500 |
-| tomcat | Ridge | 2.60 | 0.04 | 65.00x | 6,400 |
-| tomcat | KNeighborsRegressor | 2.75 | 0.06 | 45.83x | 4,483 |
-| tomcat | XGBRegressor | 4.18 | 0.55 | 7.60x | 660 |
-| velocity-1 | LinearRegression | 2.89 | 0.04 | 72.25x | 7,125 |
-| velocity-1 | DecisionTreeRegressor | 2.80 | 0.09 | 31.11x | 3,011 |
-| velocity-1 | RandomForestRegressor | 6.04 | 0.43 | 14.05x | 1,305 |
-| velocity-1 | Lasso | 2.41 | 0.05 | 48.20x | 4,720 |
-| velocity-1 | Ridge | 2.71 | 0.04 | 67.75x | 6,675 |
-| velocity-1 | KNeighborsRegressor | 2.54 | 0.05 | 50.80x | 4,980 |
-| velocity-1 | XGBRegressor | 3.53 | 0.35 | 10.09x | 909 |
-| xalan-2 | LinearRegression | 2.85 | 0.05 | 57.00x | 5,600 |
-| xalan-2 | DecisionTreeRegressor | 2.88 | 0.09 | 32.00x | 3,100 |
-| xalan-2 | RandomForestRegressor | 6.94 | 0.71 | 9.77x | 877 |
-| xalan-2 | Lasso | 2.74 | 0.05 | 54.80x | 5,380 |
-| xalan-2 | Ridge | 2.64 | 0.04 | 66.00x | 6,500 |
-| xalan-2 | KNeighborsRegressor | 2.79 | 0.06 | 46.50x | 4,550 |
-| xalan-2 | XGBRegressor | 3.62 | 0.60 | 6.03x | 503 |
-| xerces-1 | LinearRegression | 2.91 | 0.04 | 72.75x | 7,175 |
-| xerces-1 | DecisionTreeRegressor | 2.75 | 0.09 | 30.56x | 2,956 |
-| xerces-1 | RandomForestRegressor | 7.36 | 0.53 | 13.89x | 1,289 |
-| xerces-1 | Lasso | 2.85 | 0.05 | 57.00x | 5,600 |
-| xerces-1 | Ridge | 2.45 | 0.04 | 61.25x | 6,025 |
-| xerces-1 | KNeighborsRegressor | 2.89 | 0.06 | 48.17x | 4,717 |
-| xerces-1 | XGBRegressor | 3.58 | 0.42 | 8.52x | 752 |
+| Dataset | Algorithm | Genetic Time (s) | PSO Time (s) | CDEA Time (s) | ABC Time (s) | PSO/Genetic Speedup | CDEA/Genetic Speedup | ABC/Genetic Speedup |
+|---------|-----------|------------------|--------------|---------------|--------------|--------------------|--------------------|--------------------|
+| ant-1 | LinearRegression | 9.5 | 0.36 | 0.34 | 0.76 | 26.39 | 27.94 | 12.5 |
+| ant-1 | DecisionTreeRegressor | 0.56 | 0.38 | 0.43 | 0.77 | 1.47 | 1.3 | 0.73 |
+| ant-1 | RandomForestRegressor | 4.05 | 6.14 | 5.87 | 11.29 | 0.66 | 0.69 | 0.36 |
+| ant-1 | Lasso | 0.33 | 0.34 | 0.35 | 0.79 | 0.97 | 0.94 | 0.42 |
+| ant-1 | XGBRegressor | 2.83 | 2.34 | 1.33 | 3.61 | 1.21 | 2.13 | 0.78 |
+| camel-1 | LinearRegression | 0.11 | 0.34 | 0.35 | 0.75 | 0.32 | 0.31 | 0.15 |
+| camel-1 | DecisionTreeRegressor | 0.21 | 0.35 | 0.35 | 0.72 | 0.6 | 0.6 | 0.29 |
+| camel-1 | RandomForestRegressor | 2.65 | 3.69 | 3.33 | 8.46 | 0.72 | 0.8 | 0.31 |
+| camel-1 | Lasso | 0.29 | 0.35 | 0.35 | 0.79 | 0.83 | 0.83 | 0.37 |
+| camel-1 | XGBRegressor | 1.31 | 0.73 | 1.01 | 2.01 | 1.79 | 1.3 | 0.65 |
+| ivy-2 | LinearRegression | 0.11 | 0.39 | 0.35 | 0.77 | 0.28 | 0.31 | 0.14 |
+| ivy-2 | DecisionTreeRegressor | 0.31 | 0.35 | 0.36 | 0.75 | 0.89 | 0.86 | 0.41 |
+| ivy-2 | RandomForestRegressor | 3.06 | 3.48 | 3.05 | 7.62 | 0.88 | 1.0 | 0.4 |
+| ivy-2 | Lasso | 0.35 | 0.35 | 0.34 | 0.8 | 1.0 | 1.03 | 0.44 |
+| ivy-2 | XGBRegressor | 0.87 | 0.92 | 0.83 | 1.83 | 0.95 | 1.05 | 0.48 |
+| jedit-4D | LinearRegression | 0.1 | 0.35 | 0.34 | 0.76 | 0.29 | 0.29 | 0.13 |
+| jedit-4D | DecisionTreeRegressor | 0.26 | 0.35 | 0.35 | 0.74 | 0.74 | 0.74 | 0.35 |
+| jedit-4D | RandomForestRegressor | 2.41 | 3.4 | 4.03 | 7.29 | 0.71 | 0.6 | 0.33 |
+| jedit-4D | Lasso | 0.2 | 0.34 | 0.35 | 0.75 | 0.59 | 0.57 | 0.27 |
+| jedit-4D | XGBRegressor | 1.05 | 1.11 | 0.89 | 1.84 | 0.95 | 1.18 | 0.57 |
+| log4j-1 | LinearRegression | 0.13 | 0.35 | 0.34 | 0.76 | 0.37 | 0.38 | 0.17 |
+| log4j-1 | DecisionTreeRegressor | 0.25 | 0.35 | 0.35 | 0.74 | 0.71 | 0.71 | 0.34 |
+| log4j-1 | RandomForestRegressor | 1.63 | 3.41 | 3.64 | 7.47 | 0.48 | 0.45 | 0.22 |
+| log4j-1 | Lasso | 0.25 | 0.35 | 0.35 | 0.76 | 0.71 | 0.71 | 0.33 |
+| log4j-1 | XGBRegressor | 0.86 | 0.95 | 0.92 | 1.9 | 0.91 | 0.93 | 0.45 |
+| poi-2 | LinearRegression | 0.08 | 0.34 | 0.34 | 0.78 | 0.24 | 0.24 | 0.1 |
+| poi-2 | DecisionTreeRegressor | 0.27 | 0.36 | 0.35 | 0.78 | 0.75 | 0.77 | 0.35 |
+| poi-2 | RandomForestRegressor | 1.77 | 3.76 | 2.54 | 7.02 | 0.47 | 0.7 | 0.25 |
+| poi-2 | Lasso | 0.34 | 0.35 | 0.35 | 0.8 | 0.97 | 0.97 | 0.42 |
+| poi-2 | XGBRegressor | 0.75 | 0.88 | 0.78 | 1.68 | 0.85 | 0.96 | 0.45 |
+| tomcat | LinearRegression | 0.14 | 0.36 | 0.34 | 0.75 | 0.39 | 0.41 | 0.19 |
+| tomcat | DecisionTreeRegressor | 0.28 | 0.35 | 0.35 | 0.77 | 0.8 | 0.8 | 0.36 |
+| tomcat | RandomForestRegressor | 2.96 | 3.78 | 3.94 | 8.16 | 0.78 | 0.75 | 0.36 |
+| tomcat | Lasso | 0.28 | 0.35 | 0.35 | 0.77 | 0.8 | 0.8 | 0.36 |
+| tomcat | XGBRegressor | 1.39 | 1.04 | 1.51 | 2.8 | 1.34 | 0.92 | 0.5 |
+| velocity-1 | LinearRegression | 0.11 | 0.35 | 0.34 | 0.75 | 0.31 | 0.32 | 0.15 |
+| velocity-1 | DecisionTreeRegressor | 0.36 | 0.35 | 0.35 | 0.75 | 1.03 | 1.03 | 0.48 |
+| velocity-1 | RandomForestRegressor | 2.47 | 3.25 | 2.88 | 6.37 | 0.76 | 0.86 | 0.39 |
+| velocity-1 | Lasso | 0.35 | 0.35 | 0.34 | 0.79 | 1.0 | 1.03 | 0.44 |
+| velocity-1 | XGBRegressor | 0.93 | 0.91 | 0.84 | 1.81 | 1.02 | 1.11 | 0.51 |
+| xalan-2 | LinearRegression | 0.13 | 0.34 | 0.34 | 0.76 | 0.38 | 0.38 | 0.17 |
+| xalan-2 | DecisionTreeRegressor | 0.34 | 0.35 | 0.35 | 0.78 | 0.97 | 0.97 | 0.44 |
+| xalan-2 | RandomForestRegressor | 4.34 | 4.81 | 4.74 | 11.3 | 0.9 | 0.92 | 0.38 |
+| xalan-2 | Lasso | 0.31 | 0.34 | 0.34 | 0.78 | 0.91 | 0.91 | 0.4 |
+| xalan-2 | XGBRegressor | 1.58 | 1.49 | 1.4 | 2.52 | 1.06 | 1.13 | 0.63 |
+| xerces-1 | LinearRegression | 0.15 | 0.35 | 0.35 | 0.79 | 0.43 | 0.43 | 0.19 |
+| xerces-1 | DecisionTreeRegressor | 0.31 | 0.37 | 0.35 | 0.78 | 0.84 | 0.89 | 0.4 |
+| xerces-1 | RandomForestRegressor | 2.57 | 2.76 | 4.46 | 9.15 | 0.93 | 0.58 | 0.28 |
+| xerces-1 | Lasso | 0.27 | 0.35 | 0.36 | 0.8 | 0.77 | 0.75 | 0.34 |
+| xerces-1 | XGBRegressor | 0.87 | 0.93 | 0.97 | 2.27 | 0.94 | 0.9 | 0.38 |
 
-## Table 5: RMSE comparison between Genetic and Exhaustive approaches to evaluate performance similarity
+## Table 5: RMSE comparison between Bioinspired approaches
 
-| Dataset | Algorithm | RMSE (Genetic) | RMSE (Exhaustive) | Absolute Difference | Relative Difference (%) |
-|---------|-----------|----------------|-------------------|-------------------|----------------------|
-| ant-1 | LinearRegression | 0.376 | 0.379 | 0.003 | 0.79 |
-| ant-1 | DecisionTreeRegressor | 0.392 | 0.395 | 0.003 | 0.68 |
-| ant-1 | RandomForestRegressor | 0.371 | 0.371 | 0.001 | 0.24 |
-| ant-1 | Lasso | 0.493 | 0.493 | 0.000 | 0.00 |
-| ant-1 | Ridge | 0.379 | 0.379 | 0.000 | 0.00 |
-| ant-1 | KNeighborsRegressor | 0.421 | 0.421 | 0.000 | 0.00 |
-| ant-1 | XGBRegressor | 0.384 | 0.389 | 0.004 | 1.15 |
-| camel-1 | LinearRegression | 0.460 | 0.460 | 0.000 | 0.00 |
-| camel-1 | DecisionTreeRegressor | 0.469 | 0.469 | 0.000 | 0.00 |
-| camel-1 | RandomForestRegressor | 0.448 | 0.447 | 0.001 | 0.27 |
-| camel-1 | Lasso | 0.490 | 0.490 | 0.000 | 0.00 |
-| camel-1 | Ridge | 0.460 | 0.460 | 0.000 | 0.00 |
-| camel-1 | KNeighborsRegressor | 0.461 | 0.461 | 0.000 | 0.00 |
-| camel-1 | XGBRegressor | 0.450 | 0.454 | 0.004 | 0.98 |
-| ivy-2 | LinearRegression | 0.253 | 0.253 | 0.000 | 0.00 |
-| ivy-2 | DecisionTreeRegressor | 0.268 | 0.257 | 0.012 | 4.55 |
-| ivy-2 | RandomForestRegressor | 0.266 | 0.260 | 0.006 | 2.19 |
-| ivy-2 | Lasso | 0.282 | 0.282 | 0.000 | 0.00 |
-| ivy-2 | Ridge | 0.253 | 0.253 | 0.000 | 0.00 |
-| ivy-2 | KNeighborsRegressor | 0.277 | 0.277 | 0.000 | 0.00 |
-| ivy-2 | XGBRegressor | 0.260 | 0.268 | 0.008 | 2.96 |
-| jedit-4D | LinearRegression | 0.401 | 0.401 | 0.000 | 0.00 |
-| jedit-4D | DecisionTreeRegressor | 0.500 | 0.500 | 0.000 | 0.00 |
-| jedit-4D | RandomForestRegressor | 0.480 | 0.487 | 0.007 | 1.53 |
-| jedit-4D | Lasso | 0.629 | 0.629 | 0.000 | 0.00 |
-| jedit-4D | Ridge | 0.401 | 0.401 | 0.000 | 0.00 |
-| jedit-4D | KNeighborsRegressor | 0.555 | 0.562 | 0.007 | 1.25 |
-| jedit-4D | XGBRegressor | 0.511 | 0.536 | 0.025 | 4.91 |
-| log4j-1 | LinearRegression | 0.393 | 0.387 | 0.005 | 1.36 |
-| log4j-1 | DecisionTreeRegressor | 0.518 | 0.559 | 0.041 | 7.94 |
-| log4j-1 | RandomForestRegressor | 0.504 | 0.501 | 0.003 | 0.61 |
-| log4j-1 | Lasso | 0.617 | 0.617 | 0.000 | 0.00 |
-| log4j-1 | Ridge | 0.387 | 0.387 | 0.000 | 0.00 |
-| log4j-1 | KNeighborsRegressor | 0.515 | 0.482 | 0.033 | 6.92 |
-| log4j-1 | XGBRegressor | 0.509 | 0.527 | 0.017 | 3.39 |
-| poi-2 | LinearRegression | 0.265 | 0.265 | 0.000 | 0.00 |
-| poi-2 | DecisionTreeRegressor | 0.233 | 0.233 | 0.000 | 0.00 |
-| poi-2 | RandomForestRegressor | 0.274 | 0.258 | 0.016 | 6.19 |
-| poi-2 | Lasso | 0.222 | 0.222 | 0.000 | 0.00 |
-| poi-2 | Ridge | 0.265 | 0.265 | 0.000 | 0.00 |
-| poi-2 | KNeighborsRegressor | 0.233 | 0.233 | 0.000 | 0.00 |
-| poi-2 | XGBRegressor | 0.229 | 0.222 | 0.007 | 3.01 |
-| tomcat | LinearRegression | 0.236 | 0.236 | 0.000 | 0.00 |
-| tomcat | DecisionTreeRegressor | 0.248 | 0.252 | 0.004 | 1.64 |
-| tomcat | RandomForestRegressor | 0.230 | 0.236 | 0.006 | 2.78 |
-| tomcat | Lasso | 0.290 | 0.290 | 0.000 | 0.00 |
-| tomcat | Ridge | 0.236 | 0.236 | 0.000 | 0.00 |
-| tomcat | KNeighborsRegressor | 0.262 | 0.265 | 0.003 | 1.03 |
-| tomcat | XGBRegressor | 0.238 | 0.239 | 0.002 | 0.75 |
-| velocity-1 | LinearRegression | 0.456 | 0.456 | 0.000 | 0.00 |
-| velocity-1 | DecisionTreeRegressor | 0.635 | 0.682 | 0.047 | 7.40 |
-| velocity-1 | RandomForestRegressor | 0.548 | 0.544 | 0.004 | 0.65 |
-| velocity-1 | Lasso | 0.543 | 0.543 | 0.000 | 0.00 |
-| velocity-1 | Ridge | 0.456 | 0.456 | 0.000 | 0.00 |
-| velocity-1 | KNeighborsRegressor | 0.538 | 0.538 | 0.000 | 0.00 |
-| velocity-1 | XGBRegressor | 0.511 | 0.503 | 0.008 | 1.57 |
-| xalan-2 | LinearRegression | 0.268 | 0.268 | 0.000 | 0.00 |
-| xalan-2 | DecisionTreeRegressor | 0.309 | 0.309 | 0.000 | 0.00 |
-| xalan-2 | RandomForestRegressor | 0.272 | 0.270 | 0.002 | 0.88 |
-| xalan-2 | Lasso | 0.296 | 0.296 | 0.000 | 0.00 |
-| xalan-2 | Ridge | 0.268 | 0.268 | 0.000 | 0.00 |
-| xalan-2 | KNeighborsRegressor | 0.273 | 0.273 | 0.000 | 0.00 |
-| xalan-2 | XGBRegressor | 0.266 | 0.272 | 0.006 | 2.15 |
-| xerces-1 | LinearRegression | 0.408 | 0.408 | 0.000 | 0.00 |
-| xerces-1 | DecisionTreeRegressor | 0.433 | 0.492 | 0.058 | 13.39 |
-| xerces-1 | RandomForestRegressor | 0.404 | 0.402 | 0.002 | 0.45 |
-| xerces-1 | Lasso | 0.505 | 0.505 | 0.000 | 0.00 |
-| xerces-1 | Ridge | 0.408 | 0.408 | 0.000 | 0.00 |
-| xerces-1 | KNeighborsRegressor | 0.419 | 0.429 | 0.010 | 2.45 |
-| xerces-1 | XGBRegressor | 0.419 | 0.398 | 0.021 | 5.11 |
+| Dataset | Algorithm | RMSE (Genetic) | RMSE (PSO) | RMSE (CDEA) | RMSE (ABC) | Diff PSO | Diff CDEA | Diff ABC |
+|---------|-----------|----------------|------------|------------|-----------|----------|----------|---------|
+| ant-1 | LinearRegression | 0.3793709331879233 | 0.3793709331879233 | 0.3793709331879233 | 0.3793709331879233 | 0.0 | 0.0 | 0.0 |
+| ant-1 | DecisionTreeRegressor | 0.3987188591868169 | 0.3923454296145987 | 0.3950080377234149 | 0.3950080377234149 | 0.006373 | 0.003711 | 0.003711 |
+| ant-1 | RandomForestRegressor | 0.3750473806471075 | 0.3692668466646321 | 0.3705267192161611 | 0.3705267192161611 | 0.005781 | 0.004521 | 0.004521 |
+| ant-1 | GradientBoostingRegressor | 0.3792011237614747 | 0.3792743998748819 | 0.3792743998748819 | 0.3792743998748819 | 7.3e-05 | 7.3e-05 | 7.3e-05 |
+| ant-1 | Lasso | 0.4932075963235883 | 0.4932075963235883 | 0.4932075963235883 | 0.4932075963235883 | 0.0 | 0.0 | 0.0 |
+| ant-1 | Ridge | 0.3792726376497357 | 0.3792726376497357 | 0.3792726376497357 | 0.3792726376497357 | 0.0 | 0.0 | 0.0 |
